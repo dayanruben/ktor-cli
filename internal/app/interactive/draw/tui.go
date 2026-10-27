@@ -2,11 +2,12 @@ package draw
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/ktorio/ktor-cli/internal/app/i18n"
 	"github.com/ktorio/ktor-cli/internal/app/interactive/model"
 	"github.com/ktorio/ktor-cli/internal/app/network"
-	"strings"
 )
 
 var scrWidth = 0
@@ -53,7 +54,7 @@ func Tui(scr tcell.Screen, st *State, mdl *model.State) {
 	drawInput(scr, st, posX, posY, mdl.ProjectDir, LocationInput)
 
 	posY++
-	drawInlineTextEllipsis(scr, posX, posY, width, padding, subTextStyle, fmt.Sprintf(i18n.Get(i18n.ProjectCreatedIn, mdl.GetProjectPath())))
+	drawInlineTextEllipsis(scr, posX, posY, width, padding, subTextStyle, fmt.Sprint(i18n.Get(i18n.ProjectCreatedIn, mdl.GetProjectPath())))
 
 	if errs := mdl.GetErrors(model.ProjectDirNotEmptyError, model.DirNotExistError, model.ProjectDirTooLongError); len(errs) > 0 {
 		drawInlineTextEllipsis(scr, posX, posY+1, width, padding, errorStyle, strings.Join(errs, ". "))
@@ -148,8 +149,8 @@ func Tui(scr tcell.Screen, st *State, mdl *model.State) {
 		count := getVisiblePluginsCount(posY, height, plugins[off:], off)
 
 		if count == 0 {
-			msg := fmt.Sprintf(i18n.Get(i18n.TermHeightSmall, height))
-			mdl.SetError(model.TerminalHeightError, fmt.Sprintf(i18n.Get(i18n.TermHeightSmall, height)))
+			msg := fmt.Sprint(i18n.Get(i18n.TermHeightSmall, height))
+			mdl.SetError(model.TerminalHeightError, fmt.Sprint(i18n.Get(i18n.TermHeightSmall, height)))
 			drawInlineTextEllipsis(scr, padding, posY, width, padding, errorStyle, msg)
 			return
 		} else {

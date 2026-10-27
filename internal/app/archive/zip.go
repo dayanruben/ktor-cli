@@ -3,13 +3,14 @@ package archive
 import (
 	"archive/zip"
 	"errors"
-	"github.com/ktorio/ktor-cli/internal/app/i18n"
-	"github.com/ktorio/ktor-cli/internal/app/utils"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/ktorio/ktor-cli/internal/app/i18n"
+	"github.com/ktorio/ktor-cli/internal/app/utils"
 )
 
 func ExtractZip(rt io.ReaderAt, size int64, outDir string, logger *log.Logger) (rootDirs utils.StringSet, err error) {
@@ -46,7 +47,7 @@ func ExtractZip(rt io.ReaderAt, size int64, outDir string, logger *log.Logger) (
 
 			if filepath.Dir(zf.Name) != "." {
 				dir := filepath.Dir(outPath)
-				logger.Printf(i18n.Get(i18n.CreatingDir, dir))
+				logger.Print(i18n.Get(i18n.CreatingDir, dir))
 
 				if i := strings.Index(zf.Name, "/"); i != -1 {
 					rootDirs.Add(filepath.Join(outDir, zf.Name[:i]))
@@ -65,7 +66,7 @@ func ExtractZip(rt io.ReaderAt, size int64, outDir string, logger *log.Logger) (
 				return err
 			}
 
-			logger.Printf(i18n.Get(i18n.Extracting, zf.Name, outPath))
+			logger.Print(i18n.Get(i18n.Extracting, zf.Name, outPath))
 			if _, err = io.Copy(out, zipFile); err != nil {
 				return err
 			}

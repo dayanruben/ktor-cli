@@ -1,8 +1,6 @@
 module github.com/ktorio/ktor-cli
 
-go 1.22.0
-
-toolchain go1.23.3
+go 1.26.10
 
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.1

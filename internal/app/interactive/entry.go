@@ -3,14 +3,15 @@ package interactive
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"slices"
+	"strings"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/ktorio/ktor-cli/internal/app/i18n"
 	"github.com/ktorio/ktor-cli/internal/app/interactive/draw"
 	"github.com/ktorio/ktor-cli/internal/app/interactive/model"
 	"github.com/ktorio/ktor-cli/internal/app/network"
-	"net/http"
-	"slices"
-	"strings"
 )
 
 func Run(client *http.Client, ctx context.Context) (result model.Result, err error) {
@@ -164,7 +165,7 @@ func processEvent(ev tcell.Event, drawState *draw.State, mdl *model.State, resul
 
 			if draw.IsElementActive(drawState, draw.Tabs) && ev.Rune() == ' ' {
 				toggleSelectedPlugin(drawState, mdl)
-				mdl.StatusLine = fmt.Sprintf(i18n.Get(i18n.SelectedPluginsCount, len(mdl.AddedPlugins)))
+				mdl.StatusLine = fmt.Sprint(i18n.Get(i18n.SelectedPluginsCount, len(mdl.AddedPlugins)))
 				return
 			}
 
@@ -265,7 +266,7 @@ func processEvent(ev tcell.Event, drawState *draw.State, mdl *model.State, resul
 		case key == tcell.KeyEnter && mod == tcell.ModNone:
 			if drawState.ActiveElement == draw.Tabs {
 				toggleSelectedPlugin(drawState, mdl)
-				mdl.StatusLine = fmt.Sprintf(i18n.Get(i18n.SelectedPluginsCount, len(mdl.AddedPlugins)))
+				mdl.StatusLine = fmt.Sprint(i18n.Get(i18n.SelectedPluginsCount, len(mdl.AddedPlugins)))
 				return
 			} else if drawState.ActiveElement == draw.CreateButton {
 				if generateProject(result, mdl) {

@@ -3,11 +3,6 @@ package jdk
 import (
 	"bytes"
 	"errors"
-	"github.com/ktorio/ktor-cli/internal/app"
-	"github.com/ktorio/ktor-cli/internal/app/archive"
-	"github.com/ktorio/ktor-cli/internal/app/i18n"
-	"github.com/ktorio/ktor-cli/internal/app/progress"
-	"github.com/ktorio/ktor-cli/internal/app/utils"
 	"io"
 	"log"
 	"net/http"
@@ -15,6 +10,12 @@ import (
 	"path/filepath"
 	"runtime"
 	"sync"
+
+	"github.com/ktorio/ktor-cli/internal/app"
+	"github.com/ktorio/ktor-cli/internal/app/archive"
+	"github.com/ktorio/ktor-cli/internal/app/i18n"
+	"github.com/ktorio/ktor-cli/internal/app/progress"
+	"github.com/ktorio/ktor-cli/internal/app/utils"
 )
 
 func fetch(client *http.Client, d *Descriptor, outDir string, logger *log.Logger) (string, error) {
@@ -39,7 +40,7 @@ func fetch(client *http.Client, d *Descriptor, outDir string, logger *log.Logger
 	go func() {
 		defer wg.Done()
 		extractedDirs := utils.NewStringSet()
-		logger.Printf(i18n.Get(i18n.ExtractingJdkFiles, outDir))
+		logger.Print(i18n.Get(i18n.ExtractingJdkFiles, outDir))
 
 		if d.Platform == "windows" {
 			reader, progressBar := progress.NewReaderAt(

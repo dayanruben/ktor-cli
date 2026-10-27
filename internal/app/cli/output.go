@@ -3,16 +3,17 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	"runtime"
+	"strings"
+
 	"github.com/ktorio/ktor-cli/internal/app"
 	"github.com/ktorio/ktor-cli/internal/app/config"
 	"github.com/ktorio/ktor-cli/internal/app/i18n"
 	"github.com/ktorio/ktor-cli/internal/app/jdk"
 	"github.com/ktorio/ktor-cli/internal/app/network"
 	"github.com/ktorio/ktor-cli/internal/app/utils"
-	"log"
-	"os"
-	"runtime"
-	"strings"
 )
 
 func ExitWithError(err error, hasGlobalLog bool, homeDir string) {
@@ -29,7 +30,7 @@ func ExitWithProjectError(err error, projectDir string, hasGlobalLog bool, homeD
 	reportLog := HandleAppError(projectDir, err)
 
 	if hasGlobalLog && reportLog {
-		fmt.Fprintf(os.Stderr, i18n.Get(i18n.LogHint, config.LogPath(homeDir)))
+		fmt.Fprint(os.Stderr, i18n.Get(i18n.LogHint, config.LogPath(homeDir)))
 	}
 
 	if hasGlobalLog {
@@ -49,19 +50,19 @@ func HandleAppError(projectDir string, err error) (reportLog bool) {
 	if errors.As(err, &e) {
 		switch e.Kind {
 		case app.GenServerError:
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.GenServerError))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.GenServerError))
 		case app.GenServerTimeoutError:
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.GenServerTimeoutError))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.GenServerTimeoutError))
 		case app.NetworkError:
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.NetworkError))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.NetworkError))
 		case app.OpenApiDownloadJarError:
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.DownloadOpenAPIJarError))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.DownloadOpenAPIJarError))
 		case app.OpenApiExecuteJarError:
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.OpenApiExecuteJarError))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.OpenApiExecuteJarError))
 		case app.ExternalCommandError:
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.ExternalCommandError))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.ExternalCommandError))
 		case app.InternalError:
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.InternalError))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.InternalError))
 		case app.ProjectDirError:
 			reportLog = false
 			var pe *os.PathError
@@ -69,19 +70,19 @@ func HandleAppError(projectDir string, err error) (reportLog bool) {
 
 			switch {
 			case errors.Is(pe.Err, os.ErrExist):
-				fmt.Fprintf(os.Stderr, i18n.Get(i18n.ProjectDirExistAndNotEmpty, pe.Path))
+				fmt.Fprint(os.Stderr, i18n.Get(i18n.ProjectDirExistAndNotEmpty, pe.Path))
 			case errors.Is(pe.Err, os.ErrPermission):
-				fmt.Fprintf(os.Stderr, i18n.Get(i18n.NoPermsCreateProjectDir, pe.Path))
+				fmt.Fprint(os.Stderr, i18n.Get(i18n.NoPermsCreateProjectDir, pe.Path))
 			}
 		case app.ProjectExtractError:
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.ProjectExtractError, projectDir))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.ProjectExtractError, projectDir))
 		case app.JdkExtractError:
 			if je, ok := e.Err.(interface{ Unwrap() []error }); ok && len(je.Unwrap()) > 0 {
 				errs := je.Unwrap()
 				var pe *os.PathError
 				var appErr *app.Error
 				if errors.As(errs[0], &pe) || (errors.As(errs[0], &appErr) && appErr.Kind == app.ExtractRootDirExistError && errors.As(appErr.Err, &pe)) {
-					fmt.Fprintf(os.Stderr, i18n.Get(i18n.JdkExtractError, pe.Path))
+					fmt.Fprint(os.Stderr, i18n.Get(i18n.JdkExtractError, pe.Path))
 
 					if errors.Is(pe.Err, os.ErrExist) {
 						fmt.Fprintln(os.Stderr, i18n.Get(i18n.DirAlreadyExist))
@@ -91,35 +92,35 @@ func HandleAppError(projectDir string, err error) (reportLog bool) {
 				return
 			}
 
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.UnableExtractJdk))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.UnableExtractJdk))
 		case app.UnableLocateJdkError:
 			var je jdk.Error
 			errors.As(e.Err, &je)
 
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.UnableDownloadJdk, je.Descriptor.Version, je.Descriptor.Platform, je.Arch))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.UnableDownloadJdk, je.Descriptor.Version, je.Descriptor.Platform, je.Arch))
 		case app.JdkServerError:
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.JdkServerError))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.JdkServerError))
 		case app.JdkServerDownloadError:
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.JdkServerDownloadError))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.JdkServerDownloadError))
 		case app.JdkVerificationFailed:
 			fmt.Fprintln(os.Stderr, i18n.Get(i18n.ChecksumVerificationFailed))
 		case app.GradlewChmodError:
 			var pe *os.PathError
 			errors.As(e.Err, &pe)
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.UnableMakeFileExec, pe.Path))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.UnableMakeFileExec, pe.Path))
 		case app.UnknownError:
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.UnexpectedError))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.UnexpectedError))
 		case app.JdksDirError:
 			var pe *os.PathError
 			errors.As(e.Err, &pe)
 
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.UnableCreateStoreJdkDir, pe.Path))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.UnableCreateStoreJdkDir, pe.Path))
 		case app.ArtifactSearchError:
 			fmt.Fprint(os.Stderr, i18n.Get(i18n.SearchKtorModulesError))
 		case app.ArtifactSearchVersionNotSupportedError:
 			var ve *network.NotSupportedKtorVersion
 			errors.As(e.Err, &ve)
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.UnsupportedKtorVersionError, ve.Version))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.UnsupportedKtorVersionError, ve.Version))
 			reportLog = false
 		case app.ArtifactListError:
 			fmt.Fprint(os.Stderr, i18n.Get(i18n.ListKtorModulesError))
@@ -141,7 +142,7 @@ func HandleAppError(projectDir string, err error) (reportLog bool) {
 				fmt.Fprint(os.Stderr, i18n.Get(i18n.NoPermsForFile, pe.Path))
 			}
 		default:
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.UnexpectedError))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.UnexpectedError))
 		}
 	}
 
@@ -151,14 +152,14 @@ func HandleAppError(projectDir string, err error) (reportLog bool) {
 func HandleArgsValidation(err error) {
 	var e *Error
 	if !errors.As(err, &e) {
-		fmt.Fprintf(os.Stderr, i18n.Get(i18n.UnexpectedErrorWithArg, err))
+		fmt.Fprint(os.Stderr, i18n.Get(i18n.UnexpectedErrorWithArg, err))
 	}
 
 	switch e.Kind {
 	case UnrecognizedFlagsError:
 		var fe UnrecognizedFlags
 		errors.As(e.Err, &fe)
-		fmt.Fprintf(os.Stderr, i18n.Get(i18n.UnrecognizedFlagsError, strings.Join(fe, ", ")))
+		fmt.Fprint(os.Stderr, i18n.Get(i18n.UnrecognizedFlagsError, strings.Join(fe, ", ")))
 	case UnrecognizedCommandFlagsError:
 		var fe UnrecognizedCommandFlags
 		errors.As(e.Err, &fe)
@@ -168,18 +169,18 @@ func HandleArgsValidation(err error) {
 	case CommandNotFoundError:
 		var ce CommandError
 		errors.As(e.Err, &ce)
-		fmt.Fprintf(os.Stderr, i18n.Get(i18n.CommandNotFoundError, ce.Command))
+		fmt.Fprint(os.Stderr, i18n.Get(i18n.CommandNotFoundError, ce.Command))
 	case WrongNumberOfArgumentsError:
 		var ce CommandError
 		errors.As(e.Err, &ce)
 
 		if spec, ok := AllCommandsSpec[ce.Command]; ok {
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.CommandArgumentsError, ce.Command, len(spec.args), formatArgs(spec.args)))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.CommandArgumentsError, ce.Command, len(spec.args), formatArgs(spec.args)))
 		}
 	case NoArgumentForFlag:
 		var fe FlagError
 		errors.As(e.Err, &fe)
-		fmt.Fprintf(os.Stderr, i18n.Get(i18n.FlagRequiresArgument, fe.Flag))
+		fmt.Fprint(os.Stderr, i18n.Get(i18n.FlagRequiresArgument, fe.Flag))
 	default:
 		// do nothing
 	}
@@ -226,7 +227,7 @@ func PrintCommands(projectDir string, javaHomeSet bool, jdkPath string) {
 			fmt.Println(".\\gradlew.bat run")
 		} else {
 			fmt.Printf("cmd /C \"set JAVA_HOME=%s&& .\\gradlew.bat run\"\n\n", jdkPath)
-			fmt.Printf(i18n.Get(i18n.JavaHomeJdkIdeaInstruction))
+			fmt.Print(i18n.Get(i18n.JavaHomeJdkIdeaInstruction))
 			fmt.Println(jdkPath)
 		}
 	} else {
@@ -236,7 +237,7 @@ func PrintCommands(projectDir string, javaHomeSet bool, jdkPath string) {
 			fmt.Println("./gradlew run")
 		} else {
 			fmt.Printf("JAVA_HOME=%s ./gradlew run\n\n", jdkPath)
-			fmt.Printf(i18n.Get(i18n.JavaHomeJdkIdeaInstruction))
+			fmt.Print(i18n.Get(i18n.JavaHomeJdkIdeaInstruction))
 			fmt.Println(jdkPath)
 		}
 	}

@@ -6,6 +6,17 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"io"
+	"log"
+	"net"
+	"net/http"
+	"os"
+	"path/filepath"
+	"runtime/debug"
+	"slices"
+	"strings"
+	"time"
+
 	"github.com/ktorio/ktor-cli/internal/app/cli"
 	"github.com/ktorio/ktor-cli/internal/app/cli/command"
 	"github.com/ktorio/ktor-cli/internal/app/config"
@@ -18,16 +29,6 @@ import (
 	"github.com/ktorio/ktor-cli/internal/app/network"
 	"github.com/ktorio/ktor-cli/internal/app/project"
 	"github.com/ktorio/ktor-cli/internal/app/utils"
-	"io"
-	"log"
-	"net"
-	"net/http"
-	"os"
-	"path/filepath"
-	"runtime/debug"
-	"slices"
-	"strings"
-	"time"
 )
 
 var Version string
@@ -63,7 +64,7 @@ func main() {
 		logHandle, err := utils.PrepareGlobalLog(homeDir)
 
 		if err != nil {
-			verboseLogger.Printf(i18n.Get(i18n.ErrorInitLogFile, config.LogPath(homeDir)))
+			verboseLogger.Print(i18n.Get(i18n.ErrorInitLogFile, config.LogPath(homeDir)))
 		}
 
 		if err == nil {
@@ -106,7 +107,7 @@ func main() {
 		projectDir, err = filepath.Abs(projectDir)
 
 		if err != nil {
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.CannotDetermineProjectDir, projectDir))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.CannotDetermineProjectDir, projectDir))
 			os.Exit(1)
 		}
 
@@ -169,7 +170,7 @@ func main() {
 			} else if utils.Exists(filepath.Join(projectDir, "build.gradle")) {
 				fmt.Fprintln(os.Stderr, i18n.Get(i18n.AddKtorModulesToGradleGroovyError))
 			} else {
-				fmt.Fprintf(os.Stderr, i18n.Get(i18n.UnableToFindBuildGradleKts, projectDir))
+				fmt.Fprint(os.Stderr, i18n.Get(i18n.UnableToFindBuildGradleKts, projectDir))
 			}
 			os.Exit(1)
 		}
@@ -177,7 +178,7 @@ func main() {
 		var ktorVersion string
 		if v, ok := project.SearchKtorVersion(projectDir, buildRoot, tomlDoc, tomlSuccessParsed); ok {
 			ktorVersion = v
-			verboseLogger.Printf(i18n.Get(i18n.DetectedKtorVersion, ktorVersion))
+			verboseLogger.Print(i18n.Get(i18n.DetectedKtorVersion, ktorVersion))
 		} else {
 			settings, err := network.FetchSettings(client)
 
@@ -185,7 +186,7 @@ func main() {
 				cli.ExitWithError(err, hasGlobalLog, homeDir)
 			} else {
 				ktorVersion = settings.KtorVersion.DefaultId
-				verboseLogger.Printf(i18n.Get(i18n.UseLatestKtorVersion, ktorVersion))
+				verboseLogger.Print(i18n.Get(i18n.UseLatestKtorVersion, ktorVersion))
 			}
 		}
 
@@ -217,7 +218,7 @@ func main() {
 
 			switch modResult {
 			case ktor.ModuleNotFound:
-				fmt.Fprintf(os.Stderr, i18n.Get(i18n.UnableToRecognizeKtorModule, mod))
+				fmt.Fprint(os.Stderr, i18n.Get(i18n.UnableToRecognizeKtorModule, mod))
 				os.Exit(1)
 			case ktor.ModuleAmbiguity:
 				var names []string
@@ -226,17 +227,17 @@ func main() {
 						names = append(names, c.Artifact)
 					}
 				}
-				fmt.Fprintf(os.Stderr, i18n.Get(i18n.KtorModuleAmbiguity, strings.Join(names, ", ")))
+				fmt.Fprint(os.Stderr, i18n.Get(i18n.KtorModuleAmbiguity, strings.Join(names, ", ")))
 				os.Exit(1)
 			case ktor.SimilarModulesFound:
-				fmt.Fprintf(os.Stderr, i18n.Get(i18n.UnableToRecognizeKtorModule, mod))
+				fmt.Fprint(os.Stderr, i18n.Get(i18n.UnableToRecognizeKtorModule, mod))
 
 				if len(candidates) > 0 {
-					fmt.Fprintf(os.Stderr, i18n.Get(i18n.SimilarModuleQuestion, candidates[0].Artifact))
+					fmt.Fprint(os.Stderr, i18n.Get(i18n.SimilarModuleQuestion, candidates[0].Artifact))
 				}
 				os.Exit(1)
 			case ktor.ModuleFound:
-				verboseLogger.Printf(i18n.Get(i18n.ChosenKtorModule, mc.String()))
+				verboseLogger.Print(i18n.Get(i18n.ChosenKtorModule, mc.String()))
 				depPlugins := ktor.DependentPlugins(mc)
 				var serPlugin *ktor.GradlePlugin
 				if len(depPlugins) > 0 {
@@ -276,7 +277,7 @@ func main() {
 			}
 		}
 	case cli.VersionCommand:
-		fmt.Printf(i18n.Get(i18n.VersionInfo, getVersion()))
+		fmt.Print(i18n.Get(i18n.VersionInfo, getVersion()))
 	case cli.HelpCommand:
 		cli.WriteUsage(os.Stdout)
 	case cli.CompletionCommand:
@@ -306,7 +307,7 @@ func main() {
 			projectDir, err := filepath.Abs(args.CommandArgs[0])
 
 			if err != nil {
-				fmt.Fprintf(os.Stderr, i18n.Get(i18n.CannotDetermineProjectDirOfProject, projectName))
+				fmt.Fprint(os.Stderr, i18n.Get(i18n.CannotDetermineProjectDirOfProject, projectName))
 				os.Exit(1)
 			}
 
@@ -334,14 +335,14 @@ func main() {
 		}
 
 		if err != nil {
-			fmt.Fprintf(os.Stderr, i18n.Get(i18n.CannotDetermineProjectDir, projectDir))
+			fmt.Fprint(os.Stderr, i18n.Get(i18n.CannotDetermineProjectDir, projectDir))
 			os.Exit(1)
 		}
 
 		projectName := utils.CleanProjectName(filepath.Base(projectDir))
 
 		if _, err := os.Stat(specPath); errors.Is(err, os.ErrNotExist) {
-			fmt.Printf(i18n.Get(i18n.OpenApiSpecNotExist, specPath))
+			fmt.Print(i18n.Get(i18n.OpenApiSpecNotExist, specPath))
 			os.Exit(1)
 		}
 
@@ -351,7 +352,7 @@ func main() {
 			cli.ExitWithProjectError(err, projectDir, hasGlobalLog, homeDir)
 		}
 
-		fmt.Printf(i18n.Get(i18n.ProjectCreated, projectName, projectDir))
+		fmt.Print(i18n.Get(i18n.ProjectCreated, projectName, projectDir))
 	}
 }
 

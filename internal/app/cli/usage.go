@@ -2,14 +2,15 @@ package cli
 
 import (
 	"fmt"
-	"github.com/ktorio/ktor-cli/internal/app/i18n"
 	"io"
 	"strings"
+
+	"github.com/ktorio/ktor-cli/internal/app/i18n"
 )
 
 func WriteUsage(w io.Writer) {
-	fmt.Fprintf(w, i18n.Get(i18n.ToolSummary))
-	fmt.Fprintf(w, i18n.Get(i18n.UsageLine))
+	fmt.Fprint(w, i18n.Get(i18n.ToolSummary))
+	fmt.Fprint(w, i18n.Get(i18n.UsageLine))
 	fmt.Fprintln(w, i18n.Get(i18n.OptionsCaption))
 
 	maxLen := 0

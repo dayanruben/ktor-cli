@@ -4,15 +4,16 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"errors"
-	"github.com/ktorio/ktor-cli/internal/app"
-	"github.com/ktorio/ktor-cli/internal/app/i18n"
-	"github.com/ktorio/ktor-cli/internal/app/utils"
 	"io"
 	"log"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/ktorio/ktor-cli/internal/app"
+	"github.com/ktorio/ktor-cli/internal/app/i18n"
+	"github.com/ktorio/ktor-cli/internal/app/utils"
 )
 
 func ExtractTarGz(r io.Reader, outDir string, logger *log.Logger) (rootDirs utils.StringSet, err error) {
@@ -47,7 +48,7 @@ func ExtractTarGz(r io.Reader, outDir string, logger *log.Logger) (rootDirs util
 				if isRootDir {
 					rootDirs.Add(filepath.Join(outDir, header.Name))
 				}
-				logger.Printf(i18n.Get(i18n.CreatingDir, path.Join(outDir, header.Name)))
+				logger.Print(i18n.Get(i18n.CreatingDir, path.Join(outDir, header.Name)))
 				if err := os.Mkdir(path.Join(outDir, header.Name), os.FileMode(header.Mode&0xfff)); err != nil {
 					if os.IsExist(err) && isRootDir {
 						return &app.Error{Err: err, Kind: app.ExtractRootDirExistError}
@@ -64,7 +65,7 @@ func ExtractTarGz(r io.Reader, outDir string, logger *log.Logger) (rootDirs util
 				}
 
 				defer outFile.Close()
-				logger.Printf(i18n.Get(i18n.Extracting, header.Name, fp))
+				logger.Print(i18n.Get(i18n.Extracting, header.Name, fp))
 				if _, err := io.Copy(outFile, tr); err != nil {
 					return err
 				}

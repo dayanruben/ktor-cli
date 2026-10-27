@@ -4,23 +4,24 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"path"
+
 	"github.com/ktorio/ktor-cli/internal/app"
 	"github.com/ktorio/ktor-cli/internal/app/archive"
 	"github.com/ktorio/ktor-cli/internal/app/i18n"
 	"github.com/ktorio/ktor-cli/internal/app/network"
 	"github.com/ktorio/ktor-cli/internal/app/progress"
 	"github.com/ktorio/ktor-cli/internal/app/utils"
-	"io"
-	"log"
-	"net/http"
-	"os"
-	"path"
 )
 
 // Project Returns *app.Error on error
 func Project(client *http.Client, logger *log.Logger, projectDir, project string, plugins []string, ctx context.Context) error {
 	err := os.MkdirAll(projectDir, 0755)
-	logger.Printf(i18n.Get(i18n.CreatingDir, projectDir))
+	logger.Print(i18n.Get(i18n.CreatingDir, projectDir))
 
 	if _, err = os.Stat(projectDir); errors.Is(err, os.ErrNotExist) {
 		if err != nil {
@@ -37,7 +38,7 @@ func Project(client *http.Client, logger *log.Logger, projectDir, project string
 		return &app.Error{Err: &os.PathError{Err: os.ErrExist, Path: projectDir}, Kind: app.ProjectDirError}
 	}
 
-	logger.Printf(i18n.Get(i18n.CreatingDir, projectDir))
+	logger.Print(i18n.Get(i18n.CreatingDir, projectDir))
 
 	settings, err := network.FetchSettings(client)
 
@@ -74,7 +75,7 @@ func Project(client *http.Client, logger *log.Logger, projectDir, project string
 		return &app.Error{Err: err, Kind: app.GenServerError}
 	}
 
-	logger.Printf(i18n.Get(i18n.ExtractingArchiveToDir, projectDir))
+	logger.Print(i18n.Get(i18n.ExtractingArchiveToDir, projectDir))
 
 	reader, progressBar := progress.NewReaderAt(
 		bytes.NewReader(zipBytes),
@@ -91,7 +92,7 @@ func Project(client *http.Client, logger *log.Logger, projectDir, project string
 	}
 
 	gradlewPath := path.Join(projectDir, "gradlew")
-	logger.Printf(i18n.Get(i18n.MakeFileExec, gradlewPath))
+	logger.Print(i18n.Get(i18n.MakeFileExec, gradlewPath))
 	err = os.Chmod(gradlewPath, 0764)
 
 	if err != nil {

@@ -3,6 +3,14 @@ package command
 import (
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"syscall"
+
 	"github.com/ktorio/ktor-cli/internal/app"
 	"github.com/ktorio/ktor-cli/internal/app/cli"
 	"github.com/ktorio/ktor-cli/internal/app/config"
@@ -11,18 +19,11 @@ import (
 	"github.com/ktorio/ktor-cli/internal/app/network"
 	"github.com/ktorio/ktor-cli/internal/app/openapi"
 	"github.com/ktorio/ktor-cli/internal/app/utils"
-	"log"
-	"net/http"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
-	"syscall"
 )
 
 func OpenApi(client *http.Client, specPath string, projectName, projectDir string, homeDir string, logger *log.Logger) error {
 	err := os.MkdirAll(projectDir, 0755)
-	logger.Printf(i18n.Get(i18n.CreatingDir, projectDir))
+	logger.Print(i18n.Get(i18n.CreatingDir, projectDir))
 
 	var pe *os.PathError
 
@@ -47,7 +48,7 @@ func OpenApi(client *http.Client, specPath string, projectName, projectDir strin
 		}
 
 		f, err := os.Create(jarPath)
-		logger.Printf(i18n.Get(i18n.CreateOpenApiJar, jarPath))
+		logger.Print(i18n.Get(i18n.CreateOpenApiJar, jarPath))
 
 		if err != nil {
 			return &app.Error{Err: err, Kind: app.OpenApiDownloadJarError}
@@ -69,7 +70,7 @@ func OpenApi(client *http.Client, specPath string, projectName, projectDir strin
 	}
 
 	if src == jdk.Downloaded {
-		fmt.Printf(i18n.Get(i18n.JdkDownloaded, jdkPath))
+		fmt.Print(i18n.Get(i18n.JdkDownloaded, jdkPath))
 	}
 
 	settings, err := network.FetchSettings(client)
@@ -83,7 +84,7 @@ func OpenApi(client *http.Client, specPath string, projectName, projectDir strin
 	c := []string{javaExec, "-jar", jarPath, "generate", "-g", "kotlin-server", "-i", specPath,
 		"--artifact-id", projectName, "--package-name", utils.GetPackage(settings.CompanyWebsite.DefaultVal), "-o", projectDir}
 
-	logger.Printf(i18n.Get(i18n.ExecutingCommand, strings.Join(c, " ")))
+	logger.Print(i18n.Get(i18n.ExecutingCommand, strings.Join(c, " ")))
 
 	cmd := exec.Command(javaExec, c[1:]...)
 

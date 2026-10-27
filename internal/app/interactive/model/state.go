@@ -3,12 +3,13 @@ package model
 import (
 	"errors"
 	"fmt"
-	"github.com/ktorio/ktor-cli/internal/app"
-	"github.com/ktorio/ktor-cli/internal/app/i18n"
-	"github.com/ktorio/ktor-cli/internal/app/network"
 	"os"
 	"path/filepath"
 	"unicode"
+
+	"github.com/ktorio/ktor-cli/internal/app"
+	"github.com/ktorio/ktor-cli/internal/app/i18n"
+	"github.com/ktorio/ktor-cli/internal/app/network"
 )
 
 const maxFilenameLen = 255
@@ -106,12 +107,12 @@ func CheckProjectSettings(mdl *State) bool {
 
 	if !IsDirEmptyOrAbsent(mdl.GetProjectPath()) {
 		hasError = true
-		mdl.SetError(ProjectDirNotEmptyError, fmt.Sprintf(i18n.Get(i18n.DirNotEmptyError, mdl.GetProjectPath())))
+		mdl.SetError(ProjectDirNotEmptyError, fmt.Sprint(i18n.Get(i18n.DirNotEmptyError, mdl.GetProjectPath())))
 	}
 
 	if ok, p := HasNonExistentDirsInPath(mdl.GetProjectPath()); ok {
 		hasError = true
-		mdl.SetError(DirNotExistError, fmt.Sprintf(i18n.Get(i18n.DirNotExist, p)))
+		mdl.SetError(DirNotExistError, fmt.Sprint(i18n.Get(i18n.DirNotExist, p)))
 	}
 
 	if len(filepath.Base(mdl.GetProjectPath())) > maxFilenameLen {

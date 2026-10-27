@@ -3,11 +3,6 @@ package command
 import (
 	"errors"
 	"fmt"
-	"github.com/ktorio/ktor-cli/internal/app"
-	"github.com/ktorio/ktor-cli/internal/app/cli"
-	"github.com/ktorio/ktor-cli/internal/app/i18n"
-	"github.com/ktorio/ktor-cli/internal/app/project"
-	"github.com/ktorio/ktor-cli/internal/app/utils"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +10,12 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+
+	"github.com/ktorio/ktor-cli/internal/app"
+	"github.com/ktorio/ktor-cli/internal/app/cli"
+	"github.com/ktorio/ktor-cli/internal/app/i18n"
+	"github.com/ktorio/ktor-cli/internal/app/project"
+	"github.com/ktorio/ktor-cli/internal/app/utils"
 )
 
 func Dev(projectDir string, client *http.Client, verboseLogger *log.Logger, hasGlobalLog bool, homeDir string) {
@@ -26,14 +27,14 @@ func Dev(projectDir string, client *http.Client, verboseLogger *log.Logger, hasG
 	wrapperPath := filepath.Join(projectDir, wrapper)
 
 	if !utils.Exists(wrapperPath) {
-		fmt.Printf(i18n.Get(i18n.GradleWrapperNotExistErr, wrapper, projectDir))
+		fmt.Print(i18n.Get(i18n.GradleWrapperNotExistErr, wrapper, projectDir))
 		os.Exit(1)
 	}
 
 	runTask, buildTask, guessed := project.GuessGradleTasks(projectDir)
 
 	if !guessed {
-		fmt.Printf(i18n.Get(i18n.KtorGradlePluginNotFound, project.DevModeSincePluginVersion, projectDir))
+		fmt.Print(i18n.Get(i18n.KtorGradlePluginNotFound, project.DevModeSincePluginVersion, projectDir))
 		os.Exit(1)
 	}
 
@@ -51,11 +52,11 @@ func Dev(projectDir string, client *http.Client, verboseLogger *log.Logger, hasG
 	buildCmd.Dir = projectDir
 	buildCmd.Stderr = os.Stderr
 
-	verboseLogger.Printf(i18n.Get(i18n.StartingCommandMsg, "build", jdkPath, buildCmd.String()))
+	verboseLogger.Print(i18n.Get(i18n.StartingCommandMsg, "build", jdkPath, buildCmd.String()))
 
 	err = buildCmd.Start()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, i18n.Get(i18n.ErrorExecutingCommandMsg, "build", buildCmd))
+		fmt.Fprint(os.Stderr, i18n.Get(i18n.ErrorExecutingCommandMsg, "build", buildCmd))
 
 		var pe *os.PathError
 		if errors.As(err, &pe) {
@@ -73,12 +74,12 @@ func Dev(projectDir string, client *http.Client, verboseLogger *log.Logger, hasG
 	runCmd.Stdout = os.Stdout
 	runCmd.Stderr = os.Stderr
 
-	verboseLogger.Printf(i18n.Get(i18n.StartingCommandMsg, "run", jdkPath, runCmd.String()))
+	verboseLogger.Print(i18n.Get(i18n.StartingCommandMsg, "run", jdkPath, runCmd.String()))
 
 	err = runCmd.Start()
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, i18n.Get(i18n.ErrorExecutingCommandMsg, "run", runCmd))
+		fmt.Fprint(os.Stderr, i18n.Get(i18n.ErrorExecutingCommandMsg, "run", runCmd))
 
 		var pe *os.PathError
 		if errors.As(err, &pe) {
